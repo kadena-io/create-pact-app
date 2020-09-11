@@ -1,0 +1,27 @@
+{
+  "name": "create-pact-app",
+  "version": "1.0.0",
+  "description": "boilerplate for creating dApp based on Pact smart contract",
+  "bin": {
+    "@your_npm_username/create-pact-app": "./index.js",
+    "create-pact-app": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "envinfo": "^7.7.2",
+    "esm": "^3.2.25",
+    "execa": "^4.0.3",
+    "inquirer": "^7.3.3",
+    "ncp": "^2.0.0",
+    "replace-in-file": "^6.1.0",
+    "semver": "^7.3.2",
+    "validate-npm-package-name": "^3.0.0",
+    "which": "^2.0.2",
+    "yargs": "^15.4.1"
+  }
+}
