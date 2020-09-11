@@ -1,6 +1,5 @@
 (namespace "free")
-;DEPLOY OWN -> (module memory-wall-hash(currentTime + projectName) GOVERNANCE
-(module memory-wall GOVERNANCE
+(module {{contractName}} GOVERNANCE
   "A smart contract to greet the world."
 
   (defcap GOVERNANCE ()

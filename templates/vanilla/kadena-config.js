@@ -1,3 +1,5 @@
+/* WARNING: This file is for development purpose only */
+
 /*
 
 BLOCKCHAIN CONFIGURATION FILE
@@ -24,8 +26,8 @@ var chainId = "3";
 var networkId = "mainnet01";
 
 //network node
-//TESTNET -> "us1.testnet"
-var node = "us-e1";
+//TESTNET -> "us1.testnet.chainweb.com"
+var node = "us-e1.chainweb.com";
 
 //unique contract name
 //DEPLOY OWN -> "memory-wall-hash(currentTime + projectName)"
@@ -39,7 +41,7 @@ var gasStationName = "memory-wall-gas-station";
 var namespace = "free";
 
 //api host to send requests
-var host = `https://${node}.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
+var host = `https://${node}/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
 
 //creation time for request
 var creationTime = () => Math.round(new Date().getTime() / 1000) - 15;

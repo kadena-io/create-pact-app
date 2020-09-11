@@ -1,6 +1,5 @@
-(namespace 'free)
-;DEPLOY OWN -> (module memory-wall-gas-station-hash(currentTime + projectName) GOVERNANCE
-(module memory-wall-gas-station GOVERNANCE
+(namespace "free")
+(module {{gasStationName}} GOVERNANCE
   (defcap GOVERNANCE ()
     "defines who can update the smart contract"
     true

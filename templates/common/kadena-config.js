@@ -16,30 +16,25 @@ BLOCKCHAIN CONFIGURATION FILE
 */
 
 //chain that contract lives on
-//CHAINID -> selected string 0-19
 var chainId = "{{chainId}}";
 
 //id of network version
-//TESTNET -> "testnet04"
 var networkId = "{{networkId}}";
 
 //network node
-//TESTNET -> "us1.testnet"
 var node = "{{node}}";
 
 //unique contract name
-//DEPLOY OWN -> "memory-wall-hash(currentTime + projectName)"
 var contractName = "{{contractName}}";
 
 //unique gas station contract name
-//DEPLOY OWN -> "memory-wall-gas-station-hash(currentTime + projectName)"
 var gasStationName = "{{gasStationName}}";
 
 //namespace that precedes contract name
 var namespace = "free";
 
 //api host to send requests
-var host = `https://${node}.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
+var host = `https://${node}/chainweb/0.0/${networkId}/chain/${chainId}/pact`;
 
 //creation time for request
 var creationTime = () => Math.round(new Date().getTime() / 1000) - 15;

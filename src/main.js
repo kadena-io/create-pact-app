@@ -51,9 +51,7 @@ module.exports = {
 
     const kdaConfigObject = await addKadenaConfigFile(options);
 
-    if (options.contract === "deploy-own") {
-      await copyPactFiles(options, kdaConfigObject);
-    }
+    await copyPactFiles(options, kdaConfigObject);
 
     if (options.git) {
       await initGit(options);
@@ -63,31 +61,7 @@ module.exports = {
       await installDependencies(options);
     }
 
-    const runCommand = hasYarn ? "yarn" : "npm run";
-
-    console.log(chalk`
-            Success! Created ${options.targetDirectory}
-            Inside that directory, you can run several commands:
-        
-              {cyan ${runCommand} dev}
-                Starts the development server. Both contract and client-side code will
-                auto-reload once you change source files.
-        
-              {cyan ${runCommand} test}
-                Starts the test runner.
-        
-              {cyan ${runCommand} deploy}
-                Deploys contract in permanent location (as configured in {bold src/config.js}).
-                Also deploys web frontend using GitHub Pages.
-                Consult with {bold README.md} for details on how to deploy and {bold package.json} for full list of commands.
-        
-            We suggest that you begin by typing:
-        
-              {cyan cd ${options.projectDir}}
-              {cyan ${runCommand} start}
-        
-            Happy hacking!
-            `);
+    printInstructions(options);
   },
 };
 
@@ -101,12 +75,6 @@ async function copyTemplateFiles(options) {
     const fileBySigning =
       options.signing === "wallet" ? "WalletApp.js" : "GasStationApp.js";
 
-    console.log(
-      "src",
-      path.join(options.templateDirectory, "..", "files", fileBySigning)
-    );
-    console.log("dest", path.join(options.targetDirectory, "src", "App.js"));
-
     fs.copyFile(
       path.join(options.templateDirectory, "..", "files", fileBySigning),
       path.join(options.targetDirectory, "src", "App.js"),
@@ -114,14 +82,6 @@ async function copyTemplateFiles(options) {
         if (err) {
           console.log(err);
         }
-      }
-    );
-
-    await copy(
-      path.join(options.templateDirectory, "..", "files", fileBySigning),
-      path.join(options.targetDirectory, "src", "App.js"),
-      {
-        clobber: false,
       }
     );
 
@@ -149,6 +109,46 @@ async function copyPactFiles(options, kdaConfigObject) {
   await copy(pactDir, path.join(options.targetDirectory, "pact"), {
     clobber: false,
   });
+
+  const memoryWallTemplateFile = fs.readFileSync(
+    path.join(options.targetDirectory, "pact", "memory-wall.pact"),
+    "utf8"
+  );
+
+  const memoryWallFile = memoryWallTemplateFile.replace(
+    "{{contractName}}",
+    kdaConfigObject.contractName
+  );
+
+  fs.writeFile(
+    path.join(options.targetDirectory, "pact", "memory-wall.pact"),
+    memoryWallFile,
+    function (err) {
+      if (err) {
+        console.log(err);
+      }
+    }
+  );
+
+  const memoryWallGSTemplateFile = fs.readFileSync(
+    path.join(options.targetDirectory, "pact", "memory-wall-gas-station.pact"),
+    "utf8"
+  );
+
+  const memoryWallGSFile = memoryWallGSTemplateFile.replace(
+    "{{gasStationName}}",
+    kdaConfigObject.gasStationName
+  );
+
+  fs.writeFile(
+    path.join(options.targetDirectory, "pact", "memory-wall-gas-station.pact"),
+    memoryWallGSFile,
+    function (err) {
+      if (err) {
+        console.log(err);
+      }
+    }
+  );
 
   console.log("%s Pact files installed successfully", chalk.green.bold("DONE"));
 
@@ -247,10 +247,10 @@ function generateConfigObject(options) {
 
   if (options.network === "mainnet") {
     configObject.networkId = "mainnet01";
-    configObject.node = "us-e1";
+    configObject.node = "us-e1.chainweb.com";
   } else {
     configObject.networkId = "testnet04";
-    configObject.node = "us1.testnet";
+    configObject.node = "us1.testnet.chainweb.com";
   }
 
   if (options.contract === "deployed") {
@@ -265,4 +265,42 @@ function generateConfigObject(options) {
     configObject.gasStationName = `memory-wall-gas-station-${hash}`;
   }
   return configObject;
+}
+
+function printInstructions(options) {
+  if (options.platform === "react") {
+    const runCommand = options.hasYarn ? "yarn" : "npm run";
+    console.log(chalk`
+    Success! Created ${options.targetDirectory}
+    Inside that directory, you can run several commands:
+  
+      {cyan ${runCommand} dev}
+        Starts the development server. Both contract and client-side code will
+        auto-reload once you change source files.
+  
+      {cyan ${runCommand} test}
+        Starts the test runner.
+  
+      {cyan ${runCommand} deploy}
+        Deploys contract in permanent location (as configured in {bold src/config.js}).
+        Also deploys web frontend using GitHub Pages.
+        Consult with {bold README.md} for details on how to deploy and {bold package.json} for full list of commands.
+  
+    We suggest that you begin by typing:
+  
+      {cyan cd ${options.projectDir}}
+      {cyan ${runCommand} start}
+  
+    Happy hacking!
+    `);
+  } else {
+    console.log(chalk`
+    Success! Created ${options.targetDirectory}
+    Inside that directory, you can find both html and configuration files.
+
+    We suggest that you begin by opening {cyan index.html} in your browser
+
+    Happy hacking!
+    `);
+  }
 }
