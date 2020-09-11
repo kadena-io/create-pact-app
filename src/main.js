@@ -6,19 +6,28 @@ const { promisify } = require("util");
 const execa = require("execa");
 const which = require("which");
 const replaceInFile = require("replace-in-file");
-const pJson = require("../package.json");
+const SHA256 = require("crypto-js/sha256");
 
 const access = promisify(fs.access);
 const copy = promisify(ncp);
 
 module.exports = {
   createProject: async (options) => {
-    const templateDir = path.join(
-      __dirname,
-      "..",
-      "templates",
-      options.platform.toLowerCase()
-    );
+    const templateDir =
+      options.platform === "vanilla"
+        ? path.join(
+            __dirname,
+            "..",
+            "templates",
+            options.platform.toLowerCase()
+          )
+        : path.join(
+            __dirname,
+            "..",
+            "templates",
+            options.platform.toLowerCase(),
+            "app"
+          );
 
     try {
       await access(templateDir, fs.constants.R_OK);
@@ -40,9 +49,11 @@ module.exports = {
 
     await copyTemplateFiles(options);
 
-    await copyPactFiles(options);
+    const kdaConfigObject = await addKadenaConfigFile(options);
 
-    await addPactPackageJsonElements(options);
+    if (options.contract === "deploy-own") {
+      await copyPactFiles(options, kdaConfigObject);
+    }
 
     if (options.git) {
       await initGit(options);
@@ -86,13 +97,42 @@ async function copyTemplateFiles(options) {
     clobber: false,
   });
 
-  const replaceConfig = {
-    files: [`${options.targetDirectory}/package.json`],
-    from: /pact-blank-app/g,
-    to: options.projectDir,
-  };
+  if (options.platform === "react") {
+    const fileBySigning =
+      options.signing === "wallet" ? "WalletApp.js" : "GasStationApp.js";
 
-  await replaceInFile(replaceConfig);
+    console.log(
+      "src",
+      path.join(options.templateDirectory, "..", "files", fileBySigning)
+    );
+    console.log("dest", path.join(options.targetDirectory, "src", "App.js"));
+
+    fs.copyFile(
+      path.join(options.templateDirectory, "..", "files", fileBySigning),
+      path.join(options.targetDirectory, "src", "App.js"),
+      function (err) {
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+
+    await copy(
+      path.join(options.templateDirectory, "..", "files", fileBySigning),
+      path.join(options.targetDirectory, "src", "App.js"),
+      {
+        clobber: false,
+      }
+    );
+
+    const replaceConfig = {
+      files: [`${options.targetDirectory}/package.json`],
+      from: /pact-blank-app/g,
+      to: options.projectDir,
+    };
+
+    await replaceInFile(replaceConfig);
+  }
 
   console.log(
     "%s Project files installed successfully",
@@ -102,7 +142,7 @@ async function copyTemplateFiles(options) {
   return true;
 }
 
-async function copyPactFiles(options) {
+async function copyPactFiles(options, kdaConfigObject) {
   console.log("Install Pact files");
   const pactDir = path.join(__dirname, "..", "templates", "common", "pact");
 
@@ -115,31 +155,35 @@ async function copyPactFiles(options) {
   return true;
 }
 
-async function addPactPackageJsonElements(options) {
-  console.log("Configure package.json");
-  const pactPackageConfig = JSON.parse(
-    fs.readFileSync(
-      path.join(
-        __dirname,
-        "..",
-        "templates",
-        "common",
-        "pact-package-config.json"
-      ),
-      "utf8"
-    )
-  );
-  const packageJson = JSON.parse(
-    fs.readFileSync(path.join(options.targetDirectory, "package.json"), "utf8")
+async function addKadenaConfigFile(options) {
+  console.log("Install Kadena config file");
+
+  const kadenaCommonConfig = fs.readFileSync(
+    path.join(__dirname, "..", "templates", "common", "kadena-config.js"),
+    "utf8"
   );
 
-  Object.keys(pactPackageConfig).forEach((key) => {
-    packageJson[key] = { ...packageJson[key], ...pactPackageConfig[key] };
-  });
+  const configObject = generateConfigObject(options);
+
+  let kadenaConfig = kadenaCommonConfig
+    .replace("{{chainId}}", options.chain)
+    .replace("{{networkId}}", configObject.networkId)
+    .replace("{{node}}", configObject.node)
+    .replace("{{contractName}}", configObject.contractName)
+    .replace("{{gasStationName}}", configObject.gasStationName);
+
+  let destinationFolder = "";
+
+  if (options.platform === "react") {
+    kadenaConfig = kadenaConfig += "module.exports = { kadenaAPI: kadenaAPI, }";
+    destinationFolder = path.join(options.targetDirectory, "src");
+  } else {
+    destinationFolder = options.targetDirectory;
+  }
 
   fs.writeFile(
-    path.join(options.targetDirectory, "package.json"),
-    JSON.stringify(packageJson, null, 4),
+    path.join(destinationFolder, "kadena-config.js"),
+    kadenaConfig,
     function (err) {
       if (err) {
         console.log(err);
@@ -148,11 +192,11 @@ async function addPactPackageJsonElements(options) {
   );
 
   console.log(
-    "%s Package.json configured successfully",
+    "%s Kadena Config files installed successfully",
     chalk.green.bold("DONE")
   );
 
-  return true;
+  return configObject;
 }
 
 async function initGit(options) {
@@ -191,4 +235,34 @@ async function installDependencies(options) {
   );
 
   return;
+}
+
+function generateConfigObject(options) {
+  let configObject = {
+    networkId: "",
+    node: "",
+    contractName: "",
+    gasStationName: "",
+  };
+
+  if (options.network === "mainnet") {
+    configObject.networkId = "mainnet01";
+    configObject.node = "us-e1";
+  } else {
+    configObject.networkId = "testnet04";
+    configObject.node = "us1.testnet";
+  }
+
+  if (options.contract === "deployed") {
+    configObject.contractName = "memory-wall";
+    configObject.gasStationName = "memory-wall-gas-station";
+  } else {
+    const date = new Date();
+    const stringToHash = date.toISOString() + options.projectName;
+    const hash = SHA256(stringToHash);
+
+    configObject.contractName = `memory-wall-${hash}`;
+    configObject.gasStationName = `memory-wall-gas-station-${hash}`;
+  }
+  return configObject;
 }

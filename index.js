@@ -161,6 +161,8 @@ async function promptForMissingArguments(options) {
       name: "install",
       message: "Install dependencies?",
       default: optionsConfig.install.default,
+      when: (answers) =>
+        answers.platform === "react" || options.platform === "react",
     });
   }
 

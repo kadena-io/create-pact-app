@@ -1,88 +1,24 @@
 <html>
-<head>
+  <head>
     <title>Kadena Memory Wall</title>
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <link rel="icon" href="https://explorer.chainweb.com/static/img/favicon/0d63dkd822sxczcy51lbhqgflzdxw6lhgf88x2j7kc55hcpk120y-favicon-96x96.png">
+    <script
+      src="https://code.jquery.com/jquery-3.1.1.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css"
+    />
+    <link
+      rel="icon"
+      href="https://explorer.chainweb.com/static/img/favicon/0d63dkd822sxczcy51lbhqgflzdxw6lhgf88x2j7kc55hcpk120y-favicon-96x96.png"
+    />
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pact-lang-api@4.1.2/pact-lang-api-global.min.js"></script>
+    <script src="./kadena-config.js"></script>
 
     <script>
-
-    /*
-
-      BLOCKCHAIN CONFIG
-
-        initalize all data for pact-lang-api kadena blockchain calls
-
-        modify this section to interact with different
-          chains, networks, contracts
-
-        documentation:
-          https://pact-language.readthedocs.io/en/stable/
-
-        pact tutorials:
-          https://pactlang.org/
-
-    */
-
-    //chain that contract lives on
-    //CHAINID -> selected string 0-19
-    var chainId = "1"
-
-    //id of network version
-    //TESTNET -> "testnet04"
-    var networkId = "mainnet01"
-
-    //network node
-    //TESTNET -> "us1.testnet"
-    var node = "us-e1"
-
-    //unique contract name
-    //DEPLOY OWN -> "memory-wall-hash(currentTime + projectName)"
-    var contractName = "memory-wall"
-
-    //unique gas station contract name
-    //DEPLOY OWN -> "memory-wall-gas-station-hash(currentTime + projectName)"
-    var gasStationName = "memory-wall-gas-station"
-
-    //namespace that precedes contract name
-    var namespace = "free"
-
-    //api host to send requests
-    var host = `https://${node}.chainweb.com/chainweb/0.0/${networkId}/chain/${chainId}/pact`
-
-    //creation time for request
-    var creationTime = () => Math.round((new Date).getTime()/1000)-15
-
-    //JSON with all necessary blockchain call data
-    var kadenaAPI = {
-      contractName: contractName,
-      gasStationName: gasStationName,
-      namespace: namespace,
-      contractAddress: `${namespace}.${contractName}`,
-      gasStationAddress: `${namespace}.${gasStationName}`,
-      explorerURL: `https://explorer.chainweb.com/${networkId.slice(0, -2)}`,
-      meta: {
-          networkId: networkId,
-          chainId: chainId,
-          host: host,
-          creationTime: creationTime,
-          //gas price at lowest possible denomination
-          gasPrice: 0.00000000001,
-          //high gas limit for tx
-          gasLimit: 10000,
-          //time a tx lives in mempool since creationTime
-          ttl: 28800,
-          //sender === gas payer of the transaction
-          //  set to our gas station account defined in memory-wall-gas-station.pact
-          sender: "mw-free-gas",
-          //nonce here doesnt matter since the tx will never have the same hash
-          nonce: "some nonce that doesnt matter",
-      }
-    }
-
-    /*
+      /*
 
       BLOCKCHAIN TRANSACTIONS
 
@@ -93,144 +29,152 @@
 
     */
 
-    //local call
-    //  reads from blockchain previously posted memories
-    const getMemories = async (host) => {
-      //calling get-all() function from smart contract
-      const res = await Pact.fetch.local({
-        pactCode: `(${kadenaAPI.contractAddress}.get-all)`,
-        //pact-lang-api function to construct transaction meta data
-        meta: Pact.lang.mkMeta
-        (
-          kadenaAPI.meta.sender,
-          kadenaAPI.meta.chainId,
-          kadenaAPI.meta.gasPrice,
-          kadenaAPI.meta.gasLimit,
-          kadenaAPI.meta.creationTime(),
-          kadenaAPI.meta.ttl
-        )
-    }, host)
-      const all = res.result.data
-      //sorts memories by least recent
-      all.sort((a, b) => a["block-height"].int - b["block-height"].int);
-      return all
-    }
-
-
-    //send call
-    //  writes memory blockchain
-    //  updates frontend depending on response
-    //THIS IS FOR GAS STATION
-    // FOR SIGNING API COMMENT OUT THIS AND UNCOMMENT FOLLOWING FUCNTION WITH SAME NAME
-    const postMemory = async (user) => {
-        try {
-          //generates dummy keypair
-          //  using gas stations means the keys do not need to have funds
-          const kp = Pact.crypto.genKeyPair();
-          //sends JSON content to blockchain
-          const tx = await Pact.fetch.send(
+      //local call
+      //  reads from blockchain previously posted memories
+      const getMemories = async (host) => {
+        //calling get-all() function from smart contract
+        const res = await Pact.fetch.local(
           {
-            networkId: kadenaAPI.meta.networkId,
-            //calling here() function from smart contract
-            //  writes text from 'user' variable to the memory wall
-            pactCode: `(${kadenaAPI.contractAddress}.here ${JSON.stringify(user)})`,
-            keyPairs: [
-              {
-                publicKey: kp.publicKey,
-                secretKey: kp.secretKey,
-                clist: [
-                  //capability to use gas station
-                  {
-                    name: `${kadenaAPI.gasStationAddress}.GAS_PAYER`,
-                    //args are irrelevant here just need to be the right type
-                    args: ["hi", {int: 1}, 1.0]
-                  }
-                ]
-              }],
+            pactCode: `(${kadenaAPI.contractAddress}.get-all)`,
             //pact-lang-api function to construct transaction meta data
-            meta: Pact.lang.mkMeta
-            (
+            meta: Pact.lang.mkMeta(
               kadenaAPI.meta.sender,
               kadenaAPI.meta.chainId,
               kadenaAPI.meta.gasPrice,
               kadenaAPI.meta.gasLimit,
               kadenaAPI.meta.creationTime(),
               kadenaAPI.meta.ttl
-            )
-          }, kadenaAPI.meta.host);
+            ),
+          },
+          host
+        );
+        const all = res.result.data;
+        //sorts memories by least recent
+        all.sort((a, b) => a["block-height"].int - b["block-height"].int);
+        return all;
+      };
+
+      //send call
+      //  writes memory blockchain
+      //  updates frontend depending on response
+      //THIS IS FOR GAS STATION
+      // FOR SIGNING API COMMENT OUT THIS AND UNCOMMENT FOLLOWING FUCNTION WITH SAME NAME
+      const postMemory = async (user) => {
+        try {
+          //generates dummy keypair
+          //  using gas stations means the keys do not need to have funds
+          const kp = Pact.crypto.genKeyPair();
+          //sends JSON content to blockchain
+          const tx = await Pact.fetch.send(
+            {
+              networkId: kadenaAPI.meta.networkId,
+              //calling here() function from smart contract
+              //  writes text from 'user' variable to the memory wall
+              pactCode: `(${kadenaAPI.contractAddress}.here ${JSON.stringify(
+                user
+              )})`,
+              keyPairs: [
+                {
+                  publicKey: kp.publicKey,
+                  secretKey: kp.secretKey,
+                  clist: [
+                    //capability to use gas station
+                    {
+                      name: `${kadenaAPI.gasStationAddress}.GAS_PAYER`,
+                      //args are irrelevant here just need to be the right type
+                      args: ["hi", { int: 1 }, 1.0],
+                    },
+                  ],
+                },
+              ],
+              //pact-lang-api function to construct transaction meta data
+              meta: Pact.lang.mkMeta(
+                kadenaAPI.meta.sender,
+                kadenaAPI.meta.chainId,
+                kadenaAPI.meta.gasPrice,
+                kadenaAPI.meta.gasLimit,
+                kadenaAPI.meta.creationTime(),
+                kadenaAPI.meta.ttl
+              ),
+            },
+            kadenaAPI.meta.host
+          );
           //set html to wait for transaction response
           txPending();
           try {
             //listens to response to transaction sent
             //  note method will timeout in two minutes
             //    for lower level implementations checkout out Pact.fetch.poll() in pact-lang-api
-            let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, kadenaAPI.meta.host);
-            if (hello.result.status === "success"){
+            let hello = await Pact.fetch.listen(
+              { listen: tx.requestKeys[0] },
+              kadenaAPI.meta.host
+            );
+            if (hello.result.status === "success") {
               //set html for transaction success
               txSuccess(hello.result.data, tx.requestKeys[0]);
             } else {
               //set html for transaction failure
               txFailure(hello, tx.requestKeys[0]);
             }
-          } catch(e){
+          } catch (e) {
             console.log(e);
             //set html for transaction listening timeout
             txTimeout(tx.requestKeys[0]);
           }
-        } catch(e){
+        } catch (e) {
           console.log(e);
           //set html for transaction construction error
           txConstructionError();
         }
-    }
+      };
 
-    // //send call
-    // //  writes memory blockchain
-    // //  updates frontend depending on response
-    // // THIS IS FOR SIGNING API CONFIG
-    // const postMemory = async (user) => {
-    //     try {
-    //       //creates transaction to send to wallet
-    //       const toSign = {
-    //           pactCode: `(${kadenaAPI.contractAddress}.here ${JSON.stringify(user)})`,
-    //           caps: [],
-    //           gasLimit: kadenaAPI.meta.gasLimit,
-    //           chainId: kadenaAPI.meta.chainId,
-    //           ttl: kadenaAPI.meta.ttl,
-    //           envData: {}
-    //       }
-    //       //sends transaction to wallet to sign and awaits signed transaction
-    //       const signed = await Pact.wallet.sign(toSign)
-    //       console.log(signed)
-    //       //sends signed transaction to blockchain
-    //       const tx = await Pact.wallet.sendSigned(signed, kadenaAPI.meta.host)
-    //       //set html to wait for transaction response
-    //       txPending();
-    //       try {
-    //         //listens to response to transaction sent
-    //         //  note method will timeout in two minutes
-    //         //    for lower level implementations checkout out Pact.fetch.poll() in pact-lang-api
-    //         let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, kadenaAPI.meta.host);
-    //         if (hello.result.status === "success"){
-    //           //set html for transaction success
-    //           txSuccess(hello.result.data, tx.requestKeys[0]);
-    //         } else {
-    //           //set html for transaction failure
-    //           txFailure(hello, tx.requestKeys[0]);
-    //         }
-    //       } catch(e){
-    //         console.log(e);
-    //         //set html for transaction listening timeout
-    //         txTimeout(tx.requestKeys[0]);
-    //       }
-    //     } catch(e){
-    //       console.log(e);
-    //       //set html for transaction construction error
-    //       txConstructionError();
-    //     }
-    // }
+      // //send call
+      // //  writes memory blockchain
+      // //  updates frontend depending on response
+      // // THIS IS FOR SIGNING API CONFIG
+      // const postMemory = async (user) => {
+      //     try {
+      //       //creates transaction to send to wallet
+      //       const toSign = {
+      //           pactCode: `(${kadenaAPI.contractAddress}.here ${JSON.stringify(user)})`,
+      //           caps: [],
+      //           gasLimit: kadenaAPI.meta.gasLimit,
+      //           chainId: kadenaAPI.meta.chainId,
+      //           ttl: kadenaAPI.meta.ttl,
+      //           envData: {}
+      //       }
+      //       //sends transaction to wallet to sign and awaits signed transaction
+      //       const signed = await Pact.wallet.sign(toSign)
+      //       console.log(signed)
+      //       //sends signed transaction to blockchain
+      //       const tx = await Pact.wallet.sendSigned(signed, kadenaAPI.meta.host)
+      //       //set html to wait for transaction response
+      //       txPending();
+      //       try {
+      //         //listens to response to transaction sent
+      //         //  note method will timeout in two minutes
+      //         //    for lower level implementations checkout out Pact.fetch.poll() in pact-lang-api
+      //         let hello = await Pact.fetch.listen({"listen": tx.requestKeys[0]}, kadenaAPI.meta.host);
+      //         if (hello.result.status === "success"){
+      //           //set html for transaction success
+      //           txSuccess(hello.result.data, tx.requestKeys[0]);
+      //         } else {
+      //           //set html for transaction failure
+      //           txFailure(hello, tx.requestKeys[0]);
+      //         }
+      //       } catch(e){
+      //         console.log(e);
+      //         //set html for transaction listening timeout
+      //         txTimeout(tx.requestKeys[0]);
+      //       }
+      //     } catch(e){
+      //       console.log(e);
+      //       //set html for transaction construction error
+      //       txConstructionError();
+      //     }
+      // }
 
-    /*
+      /*
 
       FRONTEND ACTIONS
 
@@ -238,45 +182,75 @@
 
     */
 
-    //fetches posted memories at load
-    window.addEventListener('load', async function (event) {
-      //create feed
-      await addFeed();
-      //add smart contract info
-      document.getElementById("contract-address").innerHTML = `<b> Address: </b> ${kadenaAPI.contractAddress}`
-      document.getElementById("contract-chain-id").innerHTML = `<b> Chain: </b> ${kadenaAPI.meta.chainId}`
-      document.getElementById("contract-network").innerHTML = `<b> Network: </b> ${kadenaAPI.meta.networkId}`
-      //sends text to memory wall contract on click of 'was here'
-      document.getElementById("post-memory").addEventListener('click', async function () {
-        let user = document.getElementById("user-input").value;
-        if (user > 64 || user === "") {
-          alert("please keep name non-empty and under 64 characters")
-        } else {
-          postMemory(user);
-        }
-      }, false);
-    }, false);
+      //fetches posted memories at load
+      window.addEventListener(
+        "load",
+        async function (event) {
+          //create feed
+          await addFeed();
+          //add smart contract info
+          document.getElementById(
+            "contract-address"
+          ).innerHTML = `<b> Address: </b> ${kadenaAPI.contractAddress}`;
+          document.getElementById(
+            "contract-chain-id"
+          ).innerHTML = `<b> Chain: </b> ${kadenaAPI.meta.chainId}`;
+          document.getElementById(
+            "contract-network"
+          ).innerHTML = `<b> Network: </b> ${kadenaAPI.meta.networkId}`;
+          //sends text to memory wall contract on click of 'was here'
+          document.getElementById("post-memory").addEventListener(
+            "click",
+            async function () {
+              let user = document.getElementById("user-input").value;
+              if (user > 64 || user === "") {
+                alert("please keep name non-empty and under 64 characters");
+              } else {
+                postMemory(user);
+              }
+            },
+            false
+          );
+        },
+        false
+      );
 
-    //helper for fetching posted memories and colors the hearts
-    const addFeed = async () => {
-      let colors = ["orange", "yellow", "olive", "green", "teal", "blue", "violet", "purple", "pink", "brown", "grey"];
-      //local blockchain call to get all posted memories
-      const memories = await getMemories(kadenaAPI.meta.host);
-      memories.map((x, i) => {
-        let feed = createFeed(i, x.name, `${kadenaAPI.explorerURL}/chain/${kadenaAPI.meta.chainId}/height/${x["block-height"].int}` );
-        document.getElementById("feed-container").appendChild(feed)
-        document.getElementById(`${i}-icon`).classList.add(colors[Math.floor(Math.random()*colors.length)])
-      })
-    }
+      //helper for fetching posted memories and colors the hearts
+      const addFeed = async () => {
+        let colors = [
+          "orange",
+          "yellow",
+          "olive",
+          "green",
+          "teal",
+          "blue",
+          "violet",
+          "purple",
+          "pink",
+          "brown",
+          "grey",
+        ];
+        //local blockchain call to get all posted memories
+        const memories = await getMemories(kadenaAPI.meta.host);
+        memories.map((x, i) => {
+          let feed = createFeed(
+            i,
+            x.name,
+            `${kadenaAPI.explorerURL}/chain/${kadenaAPI.meta.chainId}/height/${x["block-height"].int}`
+          );
+          document.getElementById("feed-container").appendChild(feed);
+          document
+            .getElementById(`${i}-icon`)
+            .classList.add(colors[Math.floor(Math.random() * colors.length)]);
+        });
+      };
 
-
-    //handles html changes for loaded memories
-    const createFeed = (idx, user, href) => {
-      var feedItem = document.createElement("div");
-      feedItem.className = "event";
-      feedItem.setAttribute("id", "feed-item-"+idx)
-      feedItem.innerHTML =
-      `<div class="label">
+      //handles html changes for loaded memories
+      const createFeed = (idx, user, href) => {
+        var feedItem = document.createElement("div");
+        feedItem.className = "event";
+        feedItem.setAttribute("id", "feed-item-" + idx);
+        feedItem.innerHTML = `<div class="label">
         <i class="like icon" id="${idx}-icon"></i>
       </div>
       <div class="content">
@@ -285,93 +259,113 @@
           ${user}
           </a> was here.
         </div>
-      </div>`
-      return feedItem;
-    }
+      </div>`;
+        return feedItem;
+      };
 
+      //update html to wait for transaction result
+      const txPending = () => {
+        document.getElementById("requestKey").classList.remove("hidden");
+        document.getElementById("header-text").textContent =
+          "Transaction sent to Kadena Mainnet";
+        document.getElementById("spinner").classList.add("active");
+        document.getElementById("content-text").textContent =
+          "Please wait, this box will update once the transaction is confirmed in about 30 seconds.";
+        //SIGNING-API -> remove next three lines
+        //here
+        document.getElementById("header-two-text").textContent =
+          "Curious how interacting with a blockchain can be so simple?";
+        document.getElementById("content-two-text").textContent =
+          "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena's solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users.";
+        document.getElementById("content-three-text").textContent =
+          "Thanks to gas stations, interacting with Kadena can be as simple as filling out a web form.";
+        //to here
+      };
 
-    //update html to wait for transaction result
-    const txPending = () => {
-      document.getElementById("requestKey").classList.remove("hidden")
-      document.getElementById("header-text").textContent = "Transaction sent to Kadena Mainnet";
-      document.getElementById("spinner").classList.add("active")
-      document.getElementById("content-text").textContent = "Please wait, this box will update once the transaction is confirmed in about 30 seconds."
-      //SIGNING-API -> remove next three lines
-      //here
-      document.getElementById("header-two-text").textContent = "Curious how interacting with a blockchain can be so simple?";
-      document.getElementById("content-two-text").textContent = "With most blockchains you need an account, a wallet, and some crypto in order to interact with them. Kadena's solution to this onboarding problem is gas stations; an account that exists only to fund gas payments on behalf of other users."
-      document.getElementById("content-three-text").textContent = "Thanks to gas stations, interacting with Kadena can be as simple as filling out a web form."
-      //to here
-    }
+      //updates html for transaction failure
+      const txFailure = (res, reqKey) => {
+        document.getElementById("header-text").textContent =
+          "ERROR! INVESTIGATE BELOW";
+        document.getElementById("content-text").textContent = JSON.stringify(
+          res
+        );
+        document.getElementById("spinner").classList.remove("active");
+        document.getElementById("header-two-text").textContent = "";
+        document.getElementById("content-two-text").textContent = "";
+        document.getElementById("content-three-text").textContent = "";
+        document.getElementById("link-text").textContent = "Block Exporer Link";
+        document.getElementById(
+          "link-text"
+        ).href = `${kadenaAPI.explorerURL}/tx/${reqKey}`;
+      };
 
-    //updates html for transaction failure
-    const txFailure = (res, reqKey) => {
-      document.getElementById("header-text").textContent = "ERROR! INVESTIGATE BELOW";
-      document.getElementById("content-text").textContent = JSON.stringify(res);
-      document.getElementById("spinner").classList.remove("active")
-      document.getElementById("header-two-text").textContent = "";
-      document.getElementById("content-two-text").textContent = "";
-      document.getElementById("content-three-text").textContent = "";
-      document.getElementById("link-text").textContent = "Block Exporer Link";
-      document.getElementById("link-text").href = `${kadenaAPI.explorerURL}/tx/${reqKey}`;
-    }
+      //updates html for transaction success
+      const txSuccess = (memory, reqKey) => {
+        document.getElementById("header-text").textContent = "Success!";
+        document.getElementById("content-text").textContent =
+          JSON.stringify(memory) + " has been added to the Memory Wall.";
+        document.getElementById("spinner").classList.remove("active");
+        document.getElementById("header-two-text").textContent = "";
+        document.getElementById("content-two-text").textContent = "";
+        document.getElementById("content-three-text").textContent = "";
+        document.getElementById("link-text").textContent =
+          "View transaction in Block Explorer";
+        document.getElementById(
+          "link-text"
+        ).href = `${kadenaAPI.explorerURL}/tx/${reqKey}`;
+      };
 
-    //updates html for transaction success
-    const txSuccess = (memory, reqKey) => {
-      document.getElementById("header-text").textContent = "Success!";
-      document.getElementById("content-text").textContent = JSON.stringify(memory) + " has been added to the Memory Wall.";
-      document.getElementById("spinner").classList.remove("active")
-      document.getElementById("header-two-text").textContent = "";
-      document.getElementById("content-two-text").textContent = "";
-      document.getElementById("content-three-text").textContent = "";
-      document.getElementById("link-text").textContent = "View transaction in Block Explorer";
-      document.getElementById("link-text").href = `${kadenaAPI.explorerURL}/tx/${reqKey}`;
-    }
+      //updates html for transaction construction error
+      const txConstructionError = () => {
+        document.getElementById("requestKey").classList.remove("hidden");
+        document.getElementById("header-text").textContent =
+          "Transaction was Rejected";
+        document.getElementById("spinner").classList.remove("active");
+        document.getElementById("header-two-text").textContent = "";
+        document.getElementById("content-two-text").textContent = "";
+        document.getElementById("content-three-text").textContent = "";
+        document.getElementById("content-text").textContent =
+          "Transaction was not sent to Blockchain. Check your keys or metadata";
+      };
 
-    //updates html for transaction construction error
-    const txConstructionError = () => {
-      document.getElementById("requestKey").classList.remove("hidden")
-      document.getElementById("header-text").textContent = "Transaction was Rejected";
-      document.getElementById("spinner").classList.remove("active")
-      document.getElementById("header-two-text").textContent = "";
-      document.getElementById("content-two-text").textContent = "";
-      document.getElementById("content-three-text").textContent = "";
-      document.getElementById("content-text").textContent = "Transaction was not sent to Blockchain. Check your keys or metadata"
-    }
-
-    //updates html for timed out Pact.fetch.listen()
-    const txTimeout = (reqKey) => {
-      document.getElementById("header-text").textContent = "Waiting Timed out, but your tx was sent. Look up Below";
-      document.getElementById("content-text").textContent = reqKey;
-      document.getElementById("spinner").classList.remove("active")
-      document.getElementById("header-two-text").textContent = "";
-      document.getElementById("content-two-text").textContent = "";
-      document.getElementById("content-three-text").textContent = "";
-      document.getElementById("link-text").textContent = "View transaction in Block Explorer";
-      document.getElementById("link-text").href = `${kadenaAPI.explorerURL}/tx/${reqKey}`;
-    }
-
+      //updates html for timed out Pact.fetch.listen()
+      const txTimeout = (reqKey) => {
+        document.getElementById("header-text").textContent =
+          "Waiting Timed out, but your tx was sent. Look up Below";
+        document.getElementById("content-text").textContent = reqKey;
+        document.getElementById("spinner").classList.remove("active");
+        document.getElementById("header-two-text").textContent = "";
+        document.getElementById("content-two-text").textContent = "";
+        document.getElementById("content-three-text").textContent = "";
+        document.getElementById("link-text").textContent =
+          "View transaction in Block Explorer";
+        document.getElementById(
+          "link-text"
+        ).href = `${kadenaAPI.explorerURL}/tx/${reqKey}`;
+      };
     </script>
+  </head>
 
-</head>
-
-<!--
+  <!--
 
       HTML page infrastructure
 
 -->
 
-<body>
+  <body>
     <div id="main">
       <div class="ui raised very padded text container segment" id="container">
-        <h2 class="ui header" ><a>Welcome to the Kadena Memory Wall</a></h2>
+        <h2 class="ui header"><a>Welcome to the Kadena Memory Wall</a></h2>
         <h3>Smart Contract Details:</h3>
         <p id="contract-address"></p>
         <p id="contract-chain-id"></p>
         <p id="contract-network"></p>
-        <h3>Engrave your name and submit a real transaction on the Kadena blockchain with just 1-click</h3>
+        <h3>
+          Engrave your name and submit a real transaction on the Kadena
+          blockchain with just 1-click
+        </h3>
         <div class="ui input" id="input">
-          <input type="text" id="user-input">
+          <input type="text" id="user-input" />
           <button class="ui teal right button" id="post-memory">
             Was Here
           </button>
@@ -386,34 +380,31 @@
           <a href="" id="link-text"></a>
         </div>
         <div class="ui large feed" id="feed-container">
-          <div class="event" id="feed-item">
-           </div>
+          <div class="event" id="feed-item"></div>
         </div>
-
       </div>
-  </div>
-</body>
+    </div>
+  </body>
 
-<!--
+  <!--
 
       CSS style for page
 
 -->
 
-<style>
-#container{
-  margin-top: 50px;
-}
-#input{
-   margin-top: 5px;
-}
-#spinner{
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-#module-text{
-  margin-top: 30px;
-}
-</style>
-
+  <style>
+    #container {
+      margin-top: 50px;
+    }
+    #input {
+      margin-top: 5px;
+    }
+    #spinner {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    #module-text {
+      margin-top: 30px;
+    }
+  </style>
 </html>
