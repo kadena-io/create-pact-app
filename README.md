@@ -13,7 +13,7 @@ You should also have [npm](https://www.npmjs.com/) or [yarn](https://classic.yar
 Getting Started
 ===============
 
-***TEMPORARY!!*** (will change to `$ create-near-app`)
+***TEMPORARY!!*** (will change to `$ create-pact-app`)
 
 from same directory where you cloned `create-pact-app`
 
