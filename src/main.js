@@ -13,21 +13,13 @@ const copy = promisify(ncp);
 
 module.exports = {
   createProject: async (options) => {
-    const templateDir =
-      options.platform === "vanilla"
-        ? path.join(
-            __dirname,
-            "..",
-            "templates",
-            options.platform.toLowerCase()
-          )
-        : path.join(
-            __dirname,
-            "..",
-            "templates",
-            options.platform.toLowerCase(),
-            "app"
-          );
+    const templateDir = path.join(
+      __dirname,
+      "..",
+      "templates",
+      options.platform.toLowerCase(),
+      "app"
+    );
 
     try {
       await access(templateDir, fs.constants.R_OK);
@@ -71,12 +63,39 @@ async function copyTemplateFiles(options) {
     clobber: false,
   });
 
-  if (options.platform === "react") {
-    const fileBySigning =
-      options.signing === "wallet" ? "WalletApp.js" : "GasStationApp.js";
+  console.log(
+    "path",
+    path.join(
+      options.templateDirectory,
+      "..",
+      "files",
+      `${options.signing}.html`
+    )
+  );
 
+  if (options.platform === "vanilla") {
     fs.copyFile(
-      path.join(options.templateDirectory, "..", "files", fileBySigning),
+      path.join(
+        options.templateDirectory,
+        "..",
+        "files",
+        `${options.signing}.html`
+      ),
+      path.join(options.targetDirectory, "index.html"),
+      function (err) {
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+  } else if (options.platform === "react") {
+    fs.copyFile(
+      path.join(
+        options.templateDirectory,
+        "..",
+        "files",
+        `${options.signing}.js`
+      ),
       path.join(options.targetDirectory, "src", "App.js"),
       function (err) {
         if (err) {
@@ -247,7 +266,7 @@ function generateConfigObject(options) {
 
   if (options.network === "mainnet") {
     configObject.networkId = "mainnet01";
-    configObject.node = "us-e1.chainweb.com";
+    configObject.node = "api.chainweb.com";
   } else {
     configObject.networkId = "testnet04";
     configObject.node = "us1.testnet.chainweb.com";
@@ -273,24 +292,24 @@ function printInstructions(options) {
     console.log(chalk`
     Success! Created ${options.targetDirectory}
     Inside that directory, you can run several commands:
-  
+
       {cyan ${runCommand} dev}
         Starts the development server. Both contract and client-side code will
         auto-reload once you change source files.
-  
+
       {cyan ${runCommand} test}
         Starts the test runner.
-  
+
       {cyan ${runCommand} deploy}
         Deploys contract in permanent location (as configured in {bold src/config.js}).
         Also deploys web frontend using GitHub Pages.
         Consult with {bold README.md} for details on how to deploy and {bold package.json} for full list of commands.
-  
+
     We suggest that you begin by typing:
-  
+
       {cyan cd ${options.projectDir}}
       {cyan ${runCommand} start}
-  
+
     Happy hacking!
     `);
   } else {

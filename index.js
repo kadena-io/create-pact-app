@@ -9,15 +9,15 @@ const optionsConfig = {
     default: "vanilla",
   },
   signing: {
-    choices: ["wallet", "gas-station"],
-    default: "wallet",
+    choices: ["gas-station", "wallet"],
+    default: "gas-station",
   },
   contract: {
     choices: ["deployed", "deploy-own"],
     default: "deployed",
   },
   network: {
-    choices: ["mainnet", "testnet"],
+    choices: ["testnet", "mainnet"],
     default: ["testnet"],
   },
   chain: {

@@ -27,7 +27,7 @@ var networkId = "mainnet01";
 
 //network node
 //TESTNET -> "us1.testnet.chainweb.com"
-var node = "us-e1.chainweb.com";
+var node = "api.chainweb.com";
 
 //unique contract name
 //DEPLOY OWN -> "memory-wall-hash(currentTime + projectName)"
