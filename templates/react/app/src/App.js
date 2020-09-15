@@ -57,27 +57,30 @@ const App = () => {
   //local call
   //  reads from blockchain previously posted memories
   const getMemories = async () => {
-    //calling get-all() function from smart contract
-    const res = await Pact.fetch.local(
-      {
-        pactCode: `(${kadenaAPI.contractAddress}.get-all)`,
-        //pact-lang-api function to construct transaction meta data
-        meta: Pact.lang.mkMeta(
-          kadenaAPI.meta.sender,
-          kadenaAPI.meta.chainId,
-          kadenaAPI.meta.gasPrice,
-          kadenaAPI.meta.gasLimit,
-          kadenaAPI.meta.creationTime(),
-          kadenaAPI.meta.ttl
-        ),
-      },
-      kadenaAPI.meta.host
-    );
-    const all = res.result.data;
-    //sorts memories by least recent
-    all.sort((a, b) => a["block-height"].int - b["block-height"].int);
-    console.log(all);
-    setMemories(all);
+    try {
+      //calling get-all() function from smart contract
+      const res = await Pact.fetch.local(
+        {
+          pactCode: `(${kadenaAPI.contractAddress}.get-all)`,
+          //pact-lang-api function to construct transaction meta data
+          meta: Pact.lang.mkMeta(
+            kadenaAPI.meta.sender,
+            kadenaAPI.meta.chainId,
+            kadenaAPI.meta.gasPrice,
+            kadenaAPI.meta.gasLimit,
+            kadenaAPI.meta.creationTime(),
+            kadenaAPI.meta.ttl
+          ),
+        },
+        kadenaAPI.meta.host
+      );
+      const all = res.result.data;
+      //sorts memories by least recent
+      all.sort((a, b) => a["block-height"].int - b["block-height"].int);
+      setMemories(all);
+    } catch (e) {
+      console.log(e)
+    }
   };
 
   //send call
