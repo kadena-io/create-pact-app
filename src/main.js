@@ -149,6 +149,26 @@ async function copyPactFiles(options, kdaConfigObject) {
     }
   );
 
+  const memoryWallReplTemplateFile = fs.readFileSync(
+    path.join(options.targetDirectory, "pact", "memory-wall.repl"),
+    "utf8"
+  );
+
+  let memoryWallReplFile = memoryWallReplTemplateFile.replace(
+    "{{contractName}}",
+    kdaConfigObject.contractName
+  );
+
+  fs.writeFile(
+    path.join(options.targetDirectory, "pact", "memory-wall.repl"),
+    memoryWallReplFile,
+    function (err) {
+      if (err) {
+        console.log(err);
+      }
+    }
+  );
+
   const memoryWallGSTemplateFile = fs.readFileSync(
     path.join(options.targetDirectory, "pact", "memory-wall-gas-station.pact"),
     "utf8"

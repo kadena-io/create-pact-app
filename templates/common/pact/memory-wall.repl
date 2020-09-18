@@ -1,0 +1,55 @@
+(begin-tx)
+;; ===============
+;; Setup
+;; ===============
+
+;DEFINE KEYSETS
+;   if you have a keyset for GOVERNANCE
+;   define it here
+(env-data { "memory-wall-admin" : ["ex-key"] })
+(env-keys ["ex-key"])
+;change memory-wall-keyset to name of your keyset
+(define-keyset "memory-wall-keyset" (read-keyset "memory-wall-admin"))
+
+;setup for contract namespace
+(define-namespace "free" (read-keyset "memory-wall-admin") (read-keyset "memory-wall-admin"))
+
+; load contract into repl test
+(load "memory-wall.pact")
+
+(commit-tx)
+
+(begin-tx)
+;; ===============
+;; Contract Functions
+;; ===============
+
+;use your contract
+(use free.{{contractName}})
+
+(expect
+  ;test description
+  "calling here() once"
+  ;expected return value
+  "satoshi was here."
+  (here "satoshi"))
+
+(expect-failure
+  "calling here() again with same name"
+  "Failure: Database exception: Insert: row found for key satoshi"
+  (here "satoshi"))
+
+;change block height to 20
+(env-chain-data { "block-height": 20 })
+
+(expect
+  "calling here() with new name"
+  "fatoshi was here."
+  (here "fatoshi"))
+
+(expect
+  "calling get-all() returns all successful tx data"
+  [{"block-height": 20,"name": "fatoshi"} {"block-height": 0,"name": "satoshi"}]
+  (get-all))
+
+(commit-tx)

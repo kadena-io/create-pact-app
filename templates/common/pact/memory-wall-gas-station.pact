@@ -1,4 +1,8 @@
 (namespace "free")
+;define keyset here to guard smart contract
+; uncomment next line and enter your keyset name
+;   note that you must provide this keyset named "ks" in the transaction env data
+;(define-keyset "YOUR-KEYSET" (read-keyset "ks"))
 (module {{gasStationName}} GOVERNANCE
   (defcap GOVERNANCE ()
     "defines who can update the smart contract"
@@ -44,4 +48,7 @@
     (require-capability (ALLOW_GAS))
   )
 )
-(coin.transfer-create "YOUR-ACCOUNT-NAME" "mw-free-gas" (free.memory-wall-gas-station.create-gas-payer-guard) 0.1)
+;modify with your account info
+; "YOUR-ACCOUNT-NAME" -> account with enough KDA balance for amount + gas
+; "YOUR-GAS-STATION-NAME" -> chose a unique name for your gas station
+(coin.transfer-create "YOUR-ACCOUNT-NAME" "YOUR-GAS-STATION-NAME" (free.memory-wall-gas-station.create-gas-payer-guard) 0.1)

@@ -1,4 +1,9 @@
 (namespace "free")
+;define keyset here to guard smart contract
+; uncomment next line and enter your keyset name
+;   note that you must provide this keyset named "ks" in the transaction env data
+;(define-keyset "YOUR-KEYSET" (read-keyset "ks"))
+
 (module {{contractName}} GOVERNANCE
   "A smart contract to greet the world."
 
@@ -26,7 +31,7 @@
   (defun here (name:string)
     "Designed for /send calls. Leave your trace on Kadena mainnet!"
     (enforce (!= name "") "Name cannot be empty")
-    (write memories name
+    (insert memories name
       { "name"         : name,
         "block-height" : (at "block-height" (chain-data)) }
     )
