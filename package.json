@@ -1,10 +1,10 @@
 {
   "name": "create-pact-app",
   "version": "1.0.0",
-  "description": "boilerplate for creating dApp based on Pact smart contract",
+  "description": "Boilerplate for creating a blockchain enabled app with Pact and Kadena",
   "main": "./index.js",
   "bin": {
-    "@your_npm_username/create-pact-app": "./index.js",
+    "@fmelp/create-pact-app": "./index.js",
     "create-pact-app": "./index.js"
   },
   "scripts": {

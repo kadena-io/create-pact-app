@@ -13,11 +13,13 @@ You should also have [npm](https://www.npmjs.com/) or [yarn](https://classic.yar
 Getting Started
 ===============
 
-***TEMPORARY!!*** (will change to `$ create-pact-app`)
+1. `$ npm install -g create-pact-app`
 
-from same directory where you cloned `create-pact-app`
+2. `$ create-pact-app`
 
-    $ node create-pact-app/index.js
+3. Follow `cli` options to configure your project
+
+4. Hack away!
 
 Project Options
 ===============
