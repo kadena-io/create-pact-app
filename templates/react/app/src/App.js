@@ -74,7 +74,7 @@ const App = () => {
         },
         kadenaAPI.meta.host
       );
-      const all = res.result.data;
+      const { data: all = [] } = res.result || {};
       //sorts memories by least recent
       all.sort((a, b) => a["block-height"].int - b["block-height"].int);
       setMemories(all);
