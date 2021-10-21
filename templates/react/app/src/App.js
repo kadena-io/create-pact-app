@@ -74,7 +74,7 @@ const App = () => {
         },
         kadenaAPI.meta.host
       );
-      const all = res.result.data;
+      const { data: all = [] } = res.result || {};
       //sorts memories by least recent
       all.sort((a, b) => a["block-height"].int - b["block-height"].int);
       setMemories(all);
@@ -271,21 +271,22 @@ const App = () => {
     );
   };
 
-  const txFailure = () => {
-    return (
-      <Message style={{ fontSize: 20 }}>
-        <Message.Header style={{ marginBottom: 10 }}>
-          ERROR! INVESTIGATE BELOW
-        </Message.Header>
-        <p>{JSON.stringify(tx)}</p>
-        <p>
-          <a href={`${kadenaAPI.explorerURL}/tx/${tx.reqKey}`}>
-            View transaction in Block Explorer
-          </a>
-        </p>
-      </Message>
-    );
-  };
+  // Example error message:
+  // const txFailure = () => {
+  //   return (
+  //     <Message style={{ fontSize: 20 }}>
+  //       <Message.Header style={{ marginBottom: 10 }}>
+  //         ERROR! INVESTIGATE BELOW
+  //       </Message.Header>
+  //       <p>{JSON.stringify(tx)}</p>
+  //       <p>
+  //         <a href={`${kadenaAPI.explorerURL}/tx/${tx.reqKey}`}>
+  //           View transaction in Block Explorer
+  //         </a>
+  //       </p>
+  //     </Message>
+  //   );
+  // };
 
   const txValidationError = () => {
     return (
@@ -328,7 +329,7 @@ const App = () => {
       <Segment raised padded="very">
         <div style={{ margin: 30 }}>
           <h1>
-            <a>Welcome to the Kadena Memory Wall</a>
+            Welcome to the Kadena Memory Wall
           </h1>
 
           <h2>Smart Contract Details:</h2>

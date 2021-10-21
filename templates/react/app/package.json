@@ -2,6 +2,9 @@
   "name": "pact-blank-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "^12.13.0 || ^14.15.0 || >=15.0.0"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
