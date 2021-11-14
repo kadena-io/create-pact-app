@@ -26,7 +26,7 @@ var chainId = "3";
 var networkId = "mainnet01";
 
 //network node
-//TESTNET -> "us1.testnet.chainweb.com"
+//TESTNET -> "api.testnet.chainweb.com"
 var node = "us-e1.chainweb.com";
 
 //unique contract name
