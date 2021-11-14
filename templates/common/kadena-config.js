@@ -22,6 +22,7 @@ var chainId = "{{chainId}}";
 var networkId = "{{networkId}}";
 
 //network node
+//TESTNET: api.testnet.chainweb.com
 var node = "{{node}}";
 
 //unique contract name
