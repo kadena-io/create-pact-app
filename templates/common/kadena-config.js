@@ -54,7 +54,7 @@ var kadenaAPI = {
     host: host,
     creationTime: creationTime,
     //gas price at lowest possible denomination
-    gasPrice: 0.00000000001,
+    gasPrice: 0.000000001,
     //high gas limit for tx
     gasLimit: 10000,
     //time a tx lives in mempool since creationTime
